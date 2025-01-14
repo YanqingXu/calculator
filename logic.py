@@ -16,11 +16,11 @@ class CalculatorLogic:
     def handle_number(self, number):
         """处理数字输入"""
         if self.new_number:
-            self.current_number = number
-            self.new_number = False
-            # 清除之前的表达式，因为要开始新的计算
+            # 如果是新数字且没有运算符，说明是新的计算
             if not self.current_operator:
                 self.current_expression = number
+            self.current_number = number
+            self.new_number = False
         else:
             if len(self.current_number) < 16:  # 限制数字长度
                 self.current_number += number
@@ -36,11 +36,11 @@ class CalculatorLogic:
     def handle_decimal(self):
         """处理小数点输入"""
         if self.new_number:
-            self.current_number = "0."
-            self.new_number = False
-            # 清除之前的表达式，因为要开始新的计算
+            # 如果是新数字且没有运算符，说明是新的计算
             if not self.current_operator:
                 self.current_expression = "0."
+            self.current_number = "0."
+            self.new_number = False
         elif not self.has_decimal:
             self.current_number += "."
         
@@ -60,13 +60,10 @@ class CalculatorLogic:
             # 如果已经有运算符且正在输入第二个数，先计算
             result = self.calculate()
             if result == "错误":
-                return None
-            # 将结果作为第一个数
-            self.previous_number = result
-        elif not self.new_number or self.current_operator:
-            # 如果正在输入第一个数或已经有运算符
-            self.previous_number = self.current_number
+                return result
         
+        # 保存当前数字作为第一个操作数
+        self.previous_number = self.current_number
         self.current_operator = operator
         self.new_number = True
         self.has_decimal = False
@@ -105,11 +102,11 @@ class CalculatorLogic:
             # 保存当前表达式用于显示
             self.current_expression = f"{self.previous_number} {self.current_operator} {self.current_number}"
             
-            # 更新计算器状态
+            # 更新计算器状态，保持结果作为下一次计算的起始值
             self.current_number = result_str
             self.previous_number = ""
             self.current_operator = ""
-            self.new_number = True
+            self.new_number = False  # 改为 False，这样结果可以用于下一次计算
             self.has_decimal = "." in result_str
             
             return result_str
