@@ -6,6 +6,7 @@ from setting import SettingsManager, SettingsWindow
 from history import HistoryManager, HistoryWindow
 from keyboard import KeyboardHandler
 from config import WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE
+from background import BackgroundManager
 
 class Calculator:
     def __init__(self):
@@ -18,6 +19,7 @@ class Calculator:
         # 初始化各个模块
         self.logic = CalculatorLogic()
         self.history_manager = HistoryManager()
+        self.background_manager = BackgroundManager()
         self.ui = CalculatorUI(self.window, self.handle_button, self.handle_memory, self.toggle_history)
         self.settings_manager = SettingsManager()
         
@@ -31,6 +33,12 @@ class Calculator:
         # 初始化键盘处理器
         self.keyboard_handler = KeyboardHandler(self)
         self.keyboard_handler.bind_keyboard(self.window)
+        
+        # 绑定窗口大小变化事件
+        self.window.bind('<Configure>', self.on_window_resize)
+        
+        # 加载背景
+        self.update_background()
         
         # 应用初始设置
         self.apply_settings(self.settings_manager.settings)
@@ -141,6 +149,21 @@ class Calculator:
         """应用设置"""
         # TODO: 实现背景图片设置
         pass
+    
+    def on_window_resize(self, event):
+        """处理窗口大小变化"""
+        if event.widget == self.window:
+            self.update_background()
+    
+    def update_background(self):
+        """更新背景图片"""
+        if self.background_manager.current_background:
+            width = self.window.winfo_width()
+            height = self.window.winfo_height()
+            background = self.background_manager.get_background(width, height)
+            self.ui.update_background(background)
+        else:
+            self.ui.update_background(None)
     
     def run(self):
         """运行程序"""

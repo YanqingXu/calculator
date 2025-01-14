@@ -26,13 +26,32 @@ class CalculatorUI:
         self.style.map('Memory.TButton',
                       background=[('active', '#e6e6e6')])
         
+        # 标题栏样式
+        self.style.configure('Title.TButton',
+                           background='white',
+                           borderwidth=0,
+                           relief='flat',
+                           font=('Arial', 12))
+        self.style.map('Title.TButton',
+                      background=[('active', '#e6e6e6')])
+        self.style.configure('Title.TLabel',
+                           background='white')
+        
         self.style.configure('MemoryIndicator.TLabel',
                            background='white',
                            font=('Arial', 10))
         
         # 创建主容器
         self.container = ttk.Frame(window, style='Calculator.TFrame')
-        self.container.place(relwidth=1, relheight=1)
+        self.container.pack(fill='both', expand=True, padx=2, pady=2)
+        
+        # 创建背景画布
+        self.background_canvas = tk.Canvas(
+            self.container,
+            highlightthickness=0,
+            background='white'
+        )
+        self.background_canvas.place(x=0, y=0, relwidth=1, relheight=1)
         
         # 创建标题栏
         self.create_title_bar()
@@ -48,12 +67,24 @@ class CalculatorUI:
         title_frame = ttk.Frame(self.container, style='Calculator.TFrame')
         title_frame.pack(fill='x', padx=5, pady=2)
         
-        # 左侧菜单按钮
-        menu_button = ttk.Button(title_frame, text="≡", width=3)
-        menu_button.pack(side='left')
+        # 设置按钮
+        settings_btn = ttk.Button(
+            title_frame,
+            text="⚙",  # 使用齿轮图标
+            style='Title.TButton',
+            width=3,
+            command=lambda: self.button_callback('settings')
+        )
+        settings_btn.pack(side='left')
         
-        # 标题
-        ttk.Label(title_frame, text="标准", style='Calculator.TLabel').pack(side='left', padx=10)
+        # 背景文字
+        background_label = ttk.Label(
+            title_frame,
+            text="背景",
+            style='Title.TLabel',
+            font=('Arial', 16)
+        )
+        background_label.pack(side='left', padx=10)
         
         # 历史按钮
         history_button = ttk.Button(title_frame, text="⟳", width=3,
@@ -179,3 +210,19 @@ class CalculatorUI:
             self.memory_indicator.grid()  # 使用grid而不是pack
         else:
             self.memory_indicator.grid_remove()
+    
+    def update_background(self, background_image):
+        """更新背景图片"""
+        if background_image:
+            # 获取画布大小
+            width = self.container.winfo_width()
+            height = self.container.winfo_height()
+            # 创建背景图片
+            self.background_canvas.create_image(
+                0, 0,
+                image=background_image,
+                anchor='nw'
+            )
+        else:
+            # 清除背景
+            self.background_canvas.delete('all')
