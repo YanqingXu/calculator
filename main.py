@@ -35,6 +35,9 @@ class Calculator:
         self.keyboard_handler = KeyboardHandler(self)
         self.keyboard_handler.bind_keyboard(self.window)
         
+        # 防止频繁更新的标志
+        self.resize_after_id = None
+        
         # 绑定窗口大小变化事件
         self.window.bind('<Configure>', self.on_window_resize)
         
@@ -210,6 +213,9 @@ class Calculator:
     
     def update_background(self):
         """更新背景图片"""
+        # 重置延迟更新标志
+        self.resize_after_id = None
+        
         try:
             if self.background_manager.current_background:
                 print("正在更新背景...")
@@ -240,8 +246,13 @@ class Calculator:
         """处理窗口大小变化"""
         if event.widget == self.window and event.width > 0 and event.height > 0:
             print(f"窗口大小变化: {event.width}x{event.height}")
-            # 延迟更新背景，等待窗口大小稳定
-            self.window.after(100, self.update_background)
+            
+            # 取消之前的延迟更新
+            if self.resize_after_id:
+                self.window.after_cancel(self.resize_after_id)
+            
+            # 设置新的延迟更新
+            self.resize_after_id = self.window.after(100, self.update_background)
     
     def apply_settings(self, settings):
         """应用设置"""

@@ -43,7 +43,7 @@ class CalculatorUI:
         
         # 创建主容器
         self.container = ttk.Frame(window, style='Calculator.TFrame')
-        self.container.pack(fill='both', expand=True, padx=2, pady=2)
+        self.container.pack(fill='both', expand=True)
         
         # 创建背景画布
         self.background_canvas = tk.Canvas(
@@ -58,7 +58,7 @@ class CalculatorUI:
             self.container,
             style='Calculator.TFrame'
         )
-        self.content_frame.place(relwidth=1, relheight=1)
+        self.content_frame.place(x=2, y=2, relwidth=1, relheight=1, width=-4, height=-4)
         
         # 使所有框架透明
         self.style.configure('Calculator.TFrame', background='')
@@ -230,6 +230,7 @@ class CalculatorUI:
         if background_image:
             print("有背景图片")
             # 获取画布大小
+            self.window.update_idletasks()  # 确保大小已更新
             width = self.container.winfo_width()
             height = self.container.winfo_height()
             print(f"画布大小: {width}x{height}")
