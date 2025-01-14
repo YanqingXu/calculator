@@ -7,6 +7,7 @@ from history import HistoryManager, HistoryWindow
 from keyboard import KeyboardHandler
 from config import WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE
 from background import BackgroundManager
+import ttk
 
 class Calculator:
     def __init__(self):
@@ -138,32 +139,93 @@ class Calculator:
     
     def open_settings(self):
         """打开设置窗口"""
-        settings_window = SettingsWindow(
-            self.window,
-            self.settings_manager,
-            self.apply_settings
+        dialog = tk.Toplevel(self.window)
+        dialog.title("背景设置")
+        dialog.geometry("300x200")
+        dialog.resizable(False, False)
+        dialog.transient(self.window)  # 设置为主窗口的临时窗口
+        
+        # 设置按钮样式
+        style = ttk.Style()
+        style.configure('Settings.TButton',
+                       padding=10,
+                       width=20)
+        
+        # 设置按钮
+        button_frame = ttk.Frame(dialog)
+        button_frame.pack(expand=True)
+        
+        # 选择背景按钮
+        select_btn = ttk.Button(
+            button_frame,
+            text="选择背景图片",
+            style='Settings.TButton',
+            command=lambda: self.select_background(dialog)
         )
-        self.window.wait_window(settings_window.window)
+        select_btn.pack(pady=10)
+        
+        # 清除背景按钮
+        clear_btn = ttk.Button(
+            button_frame,
+            text="清除背景",
+            style='Settings.TButton',
+            command=lambda: self.clear_background(dialog)
+        )
+        clear_btn.pack(pady=10)
+        
+        # 关闭按钮
+        close_btn = ttk.Button(
+            button_frame,
+            text="关闭",
+            style='Settings.TButton',
+            command=dialog.destroy
+        )
+        close_btn.pack(pady=10)
+        
+        # 设置为模态窗口
+        dialog.grab_set()
+        dialog.focus_set()
+        
+        # 将窗口居中显示
+        dialog.update_idletasks()
+        x = self.window.winfo_x() + (self.window.winfo_width() - dialog.winfo_width()) // 2
+        y = self.window.winfo_y() + (self.window.winfo_height() - dialog.winfo_height()) // 2
+        dialog.geometry(f"+{x}+{y}")
+    
+    def select_background(self, dialog):
+        """选择背景图片"""
+        if self.background_manager.select_background():
+            self.update_background()
+            dialog.destroy()
+    
+    def clear_background(self, dialog):
+        """清除背景"""
+        self.background_manager.clear_background()
+        self.update_background()
+        dialog.destroy()
+    
+    def on_window_resize(self, event):
+        """处理窗口大小变化"""
+        if event.widget == self.window and event.width > 0 and event.height > 0:
+            # 延迟更新背景，等待窗口大小稳定
+            self.window.after(100, self.update_background)
+    
+    def update_background(self):
+        """更新背景图片"""
+        if self.background_manager.current_background:
+            # 获取实际窗口大小
+            width = self.window.winfo_width()
+            height = self.window.winfo_height()
+            if width > 0 and height > 0:  # 确保窗口大小有效
+                background = self.background_manager.get_background(width, height)
+                self.ui.update_background(background)
+        else:
+            self.ui.update_background(None)
     
     def apply_settings(self, settings):
         """应用设置"""
         # TODO: 实现背景图片设置
         pass
-    
-    def on_window_resize(self, event):
-        """处理窗口大小变化"""
-        if event.widget == self.window:
-            self.update_background()
-    
-    def update_background(self):
-        """更新背景图片"""
-        if self.background_manager.current_background:
-            width = self.window.winfo_width()
-            height = self.window.winfo_height()
-            background = self.background_manager.get_background(width, height)
-            self.ui.update_background(background)
-        else:
-            self.ui.update_background(None)
     
     def run(self):
         """运行程序"""

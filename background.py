@@ -6,7 +6,7 @@ from PIL import Image, ImageTk
 class BackgroundManager:
     def __init__(self):
         self.current_background = None
-        self.background_image = None
+        self.background_image = None  # 保持对PhotoImage的引用
         self.config_file = "background_config.json"
         self.load_config()
     
@@ -16,8 +16,8 @@ class BackgroundManager:
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r') as f:
                     config = json.load(f)
-                    if 'background' in config:
-                        self.load_background(config['background'])
+                    if 'background' in config and config['background']:
+                        self.current_background = config['background']
         except:
             pass
     
@@ -42,22 +42,9 @@ class BackgroundManager:
             ]
         )
         if file_path:
-            self.load_background(file_path)
+            self.current_background = file_path
             self.save_config()
             return True
-        return False
-    
-    def load_background(self, image_path):
-        """加载背景图片"""
-        try:
-            if image_path and os.path.exists(image_path):
-                # 保存当前背景路径
-                self.current_background = image_path
-                # 加载图片
-                image = Image.open(image_path)
-                return True
-        except:
-            self.current_background = None
         return False
     
     def clear_background(self):
@@ -80,20 +67,36 @@ class BackgroundManager:
             if self.current_background and os.path.exists(self.current_background):
                 # 加载原始图片
                 image = Image.open(self.current_background)
-                # 计算缩放比例
+                
+                # 计算缩放比例，保持宽高比
                 img_width, img_height = image.size
-                scale = max(width/img_width, height/img_height)
-                new_width = int(img_width * scale)
-                new_height = int(img_height * scale)
+                width_ratio = width / img_width
+                height_ratio = height / img_height
+                
+                if width_ratio > height_ratio:
+                    # 按宽度缩放
+                    new_width = width
+                    new_height = int(img_height * width_ratio)
+                else:
+                    # 按高度缩放
+                    new_width = int(img_width * height_ratio)
+                    new_height = height
+                
                 # 缩放图片
                 image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                # 裁剪到目标大小
+                
+                # 居中裁剪
                 left = (new_width - width) // 2
                 top = (new_height - height) // 2
-                image = image.crop((left, top, left + width, top + height))
-                # 转换为PhotoImage
+                right = left + width
+                bottom = top + height
+                
+                image = image.crop((left, top, right, bottom))
+                
+                # 转换为PhotoImage并保持引用
                 self.background_image = ImageTk.PhotoImage(image)
                 return self.background_image
-        except:
-            pass
+                
+        except Exception as e:
+            print(f"加载背景图片错误: {e}")
         return None

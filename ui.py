@@ -53,6 +53,10 @@ class CalculatorUI:
         )
         self.background_canvas.place(x=0, y=0, relwidth=1, relheight=1)
         
+        # 创建内容框架
+        self.content_frame = ttk.Frame(self.container, style='Calculator.TFrame')
+        self.content_frame.place(relwidth=1, relheight=1)
+        
         # 创建标题栏
         self.create_title_bar()
         
@@ -64,7 +68,7 @@ class CalculatorUI:
     
     def create_title_bar(self):
         """创建标题栏"""
-        title_frame = ttk.Frame(self.container, style='Calculator.TFrame')
+        title_frame = ttk.Frame(self.content_frame, style='Calculator.TFrame')
         title_frame.pack(fill='x', padx=5, pady=2)
         
         # 设置按钮
@@ -93,7 +97,7 @@ class CalculatorUI:
     
     def create_display(self):
         """创建显示区域"""
-        display_frame = ttk.Frame(self.container, style='Calculator.TFrame')
+        display_frame = ttk.Frame(self.content_frame, style='Calculator.TFrame')
         display_frame.pack(fill='x', padx=5, pady=5)
         
         # 算式显示标签
@@ -120,7 +124,7 @@ class CalculatorUI:
     def create_buttons(self):
         """创建按钮区域"""
         # 内存按钮区域
-        memory_frame = ttk.Frame(self.container, style='Calculator.TFrame')
+        memory_frame = ttk.Frame(self.content_frame, style='Calculator.TFrame')
         memory_frame.pack(fill='x', padx=5)
         
         # 使用Grid布局来确保按钮均匀分布
@@ -155,11 +159,11 @@ class CalculatorUI:
         self.memory_indicator.grid_remove()  # 初始时隐藏
         
         # 添加分隔线
-        separator = ttk.Separator(self.container, orient='horizontal')
+        separator = ttk.Separator(self.content_frame, orient='horizontal')
         separator.pack(fill='x', padx=5, pady=2)
         
         # 数字和运算符按钮区域
-        buttons_frame = ttk.Frame(self.container, style='Calculator.TFrame')
+        buttons_frame = ttk.Frame(self.content_frame, style='Calculator.TFrame')
         buttons_frame.pack(fill='both', expand=True, padx=5, pady=5)
         
         button_texts = [
@@ -213,16 +217,21 @@ class CalculatorUI:
     
     def update_background(self, background_image):
         """更新背景图片"""
+        # 清除现有背景
+        self.background_canvas.delete('all')
+        
         if background_image:
             # 获取画布大小
             width = self.container.winfo_width()
             height = self.container.winfo_height()
+            
             # 创建背景图片
             self.background_canvas.create_image(
-                0, 0,
+                width // 2,  # 居中显示
+                height // 2,
                 image=background_image,
-                anchor='nw'
+                anchor='center'
             )
-        else:
-            # 清除背景
-            self.background_canvas.delete('all')
+            
+            # 确保背景画布在最底层
+            self.background_canvas.lower()
