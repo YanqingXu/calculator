@@ -233,5 +233,5 @@ class CalculatorUI:
                 anchor='center'
             )
             
-            # 确保背景画布在最底层
-            self.background_canvas.lower()
+            # 确保内容框架在背景画布之上
+            self.content_frame.lift()

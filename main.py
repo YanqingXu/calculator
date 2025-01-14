@@ -194,33 +194,44 @@ class Calculator:
     
     def select_background(self, dialog):
         """选择背景图片"""
-        if self.background_manager.select_background():
-            self.update_background()
-            dialog.destroy()
+        try:
+            if self.background_manager.select_background():
+                self.update_background()
+                dialog.destroy()
+        except Exception as e:
+            print(f"选择背景图片时出错: {e}")
     
     def clear_background(self, dialog):
         """清除背景"""
-        self.background_manager.clear_background()
-        self.update_background()
-        dialog.destroy()
+        try:
+            self.background_manager.clear_background()
+            self.update_background()
+            dialog.destroy()
+        except Exception as e:
+            print(f"清除背景时出错: {e}")
+    
+    def update_background(self):
+        """更新背景图片"""
+        try:
+            if self.background_manager.current_background:
+                # 获取实际窗口大小
+                width = self.window.winfo_width()
+                height = self.window.winfo_height()
+                if width > 0 and height > 0:  # 确保窗口大小有效
+                    background = self.background_manager.get_background(width, height)
+                    if background:  # 确保成功获取到背景图片
+                        self.ui.update_background(background)
+            else:
+                self.ui.update_background(None)
+        except Exception as e:
+            print(f"更新背景时出错: {e}")
+            self.ui.update_background(None)  # 出错时清除背景
     
     def on_window_resize(self, event):
         """处理窗口大小变化"""
         if event.widget == self.window and event.width > 0 and event.height > 0:
             # 延迟更新背景，等待窗口大小稳定
             self.window.after(100, self.update_background)
-    
-    def update_background(self):
-        """更新背景图片"""
-        if self.background_manager.current_background:
-            # 获取实际窗口大小
-            width = self.window.winfo_width()
-            height = self.window.winfo_height()
-            if width > 0 and height > 0:  # 确保窗口大小有效
-                background = self.background_manager.get_background(width, height)
-                self.ui.update_background(background)
-        else:
-            self.ui.update_background(None)
     
     def apply_settings(self, settings):
         """应用设置"""
