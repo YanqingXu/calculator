@@ -1,5 +1,6 @@
 """计算器主程序"""
 import tkinter as tk
+from tkinter import ttk
 from logic import CalculatorLogic
 from ui import CalculatorUI
 from setting import SettingsManager, SettingsWindow
@@ -7,7 +8,6 @@ from history import HistoryManager, HistoryWindow
 from keyboard import KeyboardHandler
 from config import WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE
 from background import BackgroundManager
-import ttk
 
 class Calculator:
     def __init__(self):
