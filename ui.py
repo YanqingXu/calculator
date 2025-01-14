@@ -10,14 +10,25 @@ class CalculatorUI:
         self.memory_callback = memory_callback
         self.history_callback = history_callback
         
-        # 创建样式
+        # 配置样式
         self.style = ttk.Style()
         self.style.configure('Calculator.TFrame', background='white')
         self.style.configure('Calculator.TButton', **BUTTON_STYLE)
         self.style.configure('Calculator.TLabel', background='white')
         self.style.configure('Calculator.TEntry', background='white')
-        self.style.configure('Memory.TButton', **BUTTON_STYLE)
-        self.style.configure('MemoryIndicator.TLabel', background='white')
+        
+        # 内存按钮样式 - 无边框，悬停时显示背景色
+        self.style.configure('Memory.TButton',
+                           background='white',
+                           borderwidth=0,
+                           relief='flat',
+                           font=('Arial', 10))
+        self.style.map('Memory.TButton',
+                      background=[('active', '#e6e6e6')])
+        
+        self.style.configure('MemoryIndicator.TLabel',
+                           background='white',
+                           font=('Arial', 10))
         
         # 创建主容器
         self.container = ttk.Frame(window, style='Calculator.TFrame')
@@ -81,26 +92,37 @@ class CalculatorUI:
         memory_frame = ttk.Frame(self.container, style='Calculator.TFrame')
         memory_frame.pack(fill='x', padx=5)
         
-        memory_buttons = ['MC', 'MR', 'MS', 'M+', 'M-']
+        # 内存按钮
+        memory_buttons = ['MC', 'MR', 'M+', 'M-', 'MS', 'M▾']
         for text in memory_buttons:
-            btn = ttk.Button(
-                memory_frame,
-                text=text,
-                style='Memory.TButton',
-                width=5,
-                command=lambda t=text: self.button_callback(t)
-            )
-            btn.pack(side='left', expand=True, padx=1)
+            if text == 'M▾':  # 内存历史按钮
+                btn = ttk.Label(
+                    memory_frame,
+                    text=text,
+                    style='Memory.TButton',
+                    cursor='hand2'  # 鼠标悬停时显示手型
+                )
+            else:
+                btn = ttk.Button(
+                    memory_frame,
+                    text=text,
+                    style='Memory.TButton',
+                    command=lambda t=text: self.memory_callback(t)
+                )
+            btn.pack(side='left', expand=True, padx=1, pady=5)
         
         # 添加内存指示器标签
         self.memory_indicator = ttk.Label(
             memory_frame,
             text="M",
-            style='MemoryIndicator.TLabel',
-            font=('Arial', 10)
+            style='MemoryIndicator.TLabel'
         )
         self.memory_indicator.pack(side='left', padx=5)
         self.memory_indicator.pack_forget()  # 初始时隐藏
+        
+        # 添加分隔线
+        separator = ttk.Separator(self.container, orient='horizontal')
+        separator.pack(fill='x', padx=5, pady=2)
         
         # 数字和运算符按钮区域
         buttons_frame = ttk.Frame(self.container, style='Calculator.TFrame')

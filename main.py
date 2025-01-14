@@ -42,7 +42,11 @@ class Calculator:
             return
         
         # 处理内存操作
-        if button_text in ['MC', 'MR', 'MS', 'M+', 'M-']:
+        if button_text in ['MC', 'MR', 'MS', 'M+', 'M-', 'M▾']:
+            if button_text == 'M▾':
+                # TODO: 显示内存历史记录
+                return
+            
             result = self.logic.handle_memory(button_text)
             if result == "错误":
                 self.ui.update_display("", "错误", False)
