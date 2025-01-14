@@ -16,6 +16,8 @@ class CalculatorUI:
         self.style.configure('Calculator.TButton', **BUTTON_STYLE)
         self.style.configure('Calculator.TLabel', background='white')
         self.style.configure('Calculator.TEntry', background='white')
+        self.style.configure('Memory.TButton', **BUTTON_STYLE)
+        self.style.configure('MemoryIndicator.TLabel', background='white')
         
         # 创建主容器
         self.container = ttk.Frame(window, style='Calculator.TFrame')
@@ -75,41 +77,55 @@ class CalculatorUI:
     
     def create_buttons(self):
         """创建按钮区域"""
-        button_frame = ttk.Frame(self.container, style='Calculator.TFrame')
-        button_frame.pack(fill='both', expand=True, padx=2, pady=2)
+        # 内存按钮区域
+        memory_frame = ttk.Frame(self.container, style='Calculator.TFrame')
+        memory_frame.pack(fill='x', padx=5)
         
-        # 内存按钮行
-        memory_frame = ttk.Frame(button_frame, style='Calculator.TFrame')
-        memory_frame.pack(fill='x', pady=1)
-        for text in MEMORY_BUTTONS:
-            btn = ttk.Button(memory_frame, text=text, style='Calculator.TButton')
-            btn.pack(side='left', expand=True, padx=1)
-            if text != 'M▾':  # M▾ 是下拉按钮，不需要绑定内存回调
-                btn.bind('<Button-1>', lambda e, t=text: self.memory_callback(t))
-        
-        # 第一行功能按钮
-        func_frame1 = ttk.Frame(button_frame, style='Calculator.TFrame')
-        func_frame1.pack(fill='x', pady=1)
-        for text in FUNCTION_ROW1:
-            btn = ttk.Button(func_frame1, text=text, style='Calculator.TButton',
-                           command=lambda t=text: self.button_callback(t))
+        memory_buttons = ['MC', 'MR', 'MS', 'M+', 'M-']
+        for text in memory_buttons:
+            btn = ttk.Button(
+                memory_frame,
+                text=text,
+                style='Memory.TButton',
+                width=5,
+                command=lambda t=text: self.button_callback(t)
+            )
             btn.pack(side='left', expand=True, padx=1)
         
-        # 第二行功能按钮
-        func_frame2 = ttk.Frame(button_frame, style='Calculator.TFrame')
-        func_frame2.pack(fill='x', pady=1)
-        for text in FUNCTION_ROW2:
-            btn = ttk.Button(func_frame2, text=text, style='Calculator.TButton',
-                           command=lambda t=text: self.button_callback(t))
-            btn.pack(side='left', expand=True, padx=1)
+        # 添加内存指示器标签
+        self.memory_indicator = ttk.Label(
+            memory_frame,
+            text="M",
+            style='MemoryIndicator.TLabel',
+            font=('Arial', 10)
+        )
+        self.memory_indicator.pack(side='left', padx=5)
+        self.memory_indicator.pack_forget()  # 初始时隐藏
         
-        # 数字和运算符按钮
-        for row in NUMBER_AND_OPERATORS:
-            row_frame = ttk.Frame(button_frame, style='Calculator.TFrame')
-            row_frame.pack(fill='x', pady=1)
-            for text in row:
-                btn = ttk.Button(row_frame, text=text, style='Calculator.TButton',
-                               command=lambda t=text: self.button_callback(t))
+        # 数字和运算符按钮区域
+        buttons_frame = ttk.Frame(self.container, style='Calculator.TFrame')
+        buttons_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        
+        button_texts = [
+            ['%', 'CE', 'C', '⌫'],
+            ['1/x', 'x²', '√', '÷'],
+            ['7', '8', '9', '×'],
+            ['4', '5', '6', '-'],
+            ['1', '2', '3', '+'],
+            ['±', '0', '.', '=']
+        ]
+        
+        for row_texts in button_texts:
+            row = ttk.Frame(buttons_frame, style='Calculator.TFrame')
+            row.pack(fill='x', expand=True, pady=1)
+            for text in row_texts:
+                btn = ttk.Button(
+                    row,
+                    text=text,
+                    style='Calculator.TButton',
+                    width=5,
+                    command=lambda t=text: self.button_callback(t)
+                )
                 btn.pack(side='left', expand=True, padx=1)
     
     def update_display(self, expression, result, show_equals=False):
@@ -131,3 +147,10 @@ class CalculatorUI:
         
         # 更新结果显示
         self.display_var.set(result)
+    
+    def update_memory_indicator(self, has_memory):
+        """更新内存指示器显示状态"""
+        if has_memory:
+            self.memory_indicator.pack(side='left', padx=5)
+        else:
+            self.memory_indicator.pack_forget()

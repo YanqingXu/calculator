@@ -41,6 +41,17 @@ class Calculator:
             self.open_settings()
             return
         
+        # 处理内存操作
+        if button_text in ['MC', 'MR', 'MS', 'M+', 'M-']:
+            result = self.logic.handle_memory(button_text)
+            if result == "错误":
+                self.ui.update_display("", "错误", False)
+            elif result:  # MR 操作返回内存值
+                self.ui.update_display(self.logic.current_expression, result, False)
+            # 更新内存指示器
+            self.ui.update_memory_indicator(self.logic.has_memory())
+            return
+        
         result = None
         if button_text.isdigit() or button_text == '.':
             if button_text == '.':

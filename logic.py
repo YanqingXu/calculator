@@ -12,6 +12,7 @@ class CalculatorLogic:
         self.current_expression = "0"  # 当前完整表达式
         self.new_number = True  # 是否开始输入新数字
         self.has_decimal = False  # 是否已有小数点
+        self.memory_value = "0"  # 初始化内存值
     
     def handle_number(self, number):
         """处理数字输入"""
@@ -113,6 +114,63 @@ class CalculatorLogic:
             
         except:
             return "错误"
+    
+    def handle_memory(self, operation):
+        """处理内存操作
+        
+        Args:
+            operation: 内存操作类型 ('MC', 'MR', 'MS', 'M+', 'M-')
+        
+        Returns:
+            如果是MR操作，返回内存值；否则返回None
+        """
+        try:
+            if operation == 'MC':  # Memory Clear
+                self.memory_value = "0"
+                return None
+                
+            elif operation == 'MR':  # Memory Recall
+                self.current_number = self.memory_value
+                self.new_number = False
+                if not self.current_operator:
+                    self.current_expression = self.memory_value
+                else:
+                    self.current_expression = f"{self.previous_number} {self.current_operator} {self.memory_value}"
+                return self.memory_value
+                
+            elif operation == 'MS':  # Memory Store
+                self.memory_value = self.current_number
+                return None
+                
+            elif operation == 'M+':  # Memory Add
+                memory = float(self.memory_value)
+                current = float(self.current_number)
+                result = memory + current
+                if result.is_integer():
+                    self.memory_value = str(int(result))
+                else:
+                    self.memory_value = "{:.10f}".format(result).rstrip("0").rstrip(".")
+                return None
+                
+            elif operation == 'M-':  # Memory Subtract
+                memory = float(self.memory_value)
+                current = float(self.current_number)
+                result = memory - current
+                if result.is_integer():
+                    self.memory_value = str(int(result))
+                else:
+                    self.memory_value = "{:.10f}".format(result).rstrip("0").rstrip(".")
+                return None
+                
+        except:
+            return "错误"
+            
+    def has_memory(self):
+        """检查内存中是否有非零值"""
+        try:
+            return float(self.memory_value) != 0
+        except:
+            return False
     
     def clear_all(self):
         """清除所有内容"""
