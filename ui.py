@@ -92,9 +92,12 @@ class CalculatorUI:
         memory_frame = ttk.Frame(self.container, style='Calculator.TFrame')
         memory_frame.pack(fill='x', padx=5)
         
+        # 使用Grid布局来确保按钮均匀分布
+        memory_frame.grid_columnconfigure((0,1,2,3,4,5), weight=1)  # 6个列等宽
+        
         # 内存按钮
         memory_buttons = ['MC', 'MR', 'M+', 'M-', 'MS', 'M▾']
-        for text in memory_buttons:
+        for i, text in enumerate(memory_buttons):
             if text == 'M▾':  # 内存历史按钮
                 btn = ttk.Label(
                     memory_frame,
@@ -109,7 +112,7 @@ class CalculatorUI:
                     style='Memory.TButton',
                     command=lambda t=text: self.memory_callback(t)
                 )
-            btn.pack(side='left', expand=True, padx=1, pady=5)
+            btn.grid(row=0, column=i, sticky='nsew', padx=1, pady=5)
         
         # 添加内存指示器标签
         self.memory_indicator = ttk.Label(
@@ -117,8 +120,8 @@ class CalculatorUI:
             text="M",
             style='MemoryIndicator.TLabel'
         )
-        self.memory_indicator.pack(side='left', padx=5)
-        self.memory_indicator.pack_forget()  # 初始时隐藏
+        self.memory_indicator.grid(row=0, column=6, padx=5)
+        self.memory_indicator.grid_remove()  # 初始时隐藏
         
         # 添加分隔线
         separator = ttk.Separator(self.container, orient='horizontal')
@@ -173,6 +176,6 @@ class CalculatorUI:
     def update_memory_indicator(self, has_memory):
         """更新内存指示器显示状态"""
         if has_memory:
-            self.memory_indicator.pack(side='left', padx=5)
+            self.memory_indicator.grid()  # 使用grid而不是pack
         else:
-            self.memory_indicator.pack_forget()
+            self.memory_indicator.grid_remove()
