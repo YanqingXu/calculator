@@ -18,6 +18,9 @@ class CalculatorLogic:
         if self.new_number:
             self.current_number = number
             self.new_number = False
+            # 清除之前的表达式，因为要开始新的计算
+            if not self.current_operator:
+                self.current_expression = number
         else:
             if len(self.current_number) < 16:  # 限制数字长度
                 self.current_number += number
@@ -35,6 +38,9 @@ class CalculatorLogic:
         if self.new_number:
             self.current_number = "0."
             self.new_number = False
+            # 清除之前的表达式，因为要开始新的计算
+            if not self.current_operator:
+                self.current_expression = "0."
         elif not self.has_decimal:
             self.current_number += "."
         
@@ -51,16 +57,22 @@ class CalculatorLogic:
     def handle_operator(self, operator):
         """处理运算符输入"""
         if self.current_operator and not self.new_number:
-            self.calculate()
+            # 如果已经有运算符且正在输入第二个数，先计算
+            result = self.calculate()
+            if result == "错误":
+                return None
+            # 将结果作为第一个数
+            self.previous_number = result
+        elif not self.new_number or self.current_operator:
+            # 如果正在输入第一个数或已经有运算符
+            self.previous_number = self.current_number
         
         self.current_operator = operator
-        if not self.new_number:
-            self.previous_number = self.current_number
-            self.new_number = True
+        self.new_number = True
+        self.has_decimal = False
         
         # 更新表达式
         self.current_expression = f"{self.previous_number} {operator}"
-        self.has_decimal = False
         
         return None  # 不返回结果，只在计算完成时返回
     
