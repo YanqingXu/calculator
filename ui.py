@@ -54,16 +54,22 @@ class CalculatorUI:
         self.background_canvas.place(x=0, y=0, relwidth=1, relheight=1)
         
         # 创建内容框架
-        self.content_frame = ttk.Frame(self.container, style='Calculator.TFrame')
+        self.content_frame = ttk.Frame(
+            self.container,
+            style='Calculator.TFrame'
+        )
         self.content_frame.place(relwidth=1, relheight=1)
         
-        # 创建标题栏
+        # 使所有框架透明
+        self.style.configure('Calculator.TFrame', background='')
+        self.style.configure('Calculator.TLabel', background='')
+        self.style.configure('Memory.TButton', background='')
+        self.style.configure('Title.TButton', background='')
+        self.style.configure('Title.TLabel', background='')
+        self.style.configure('MemoryIndicator.TLabel', background='')
+        
         self.create_title_bar()
-        
-        # 创建显示区域
         self.create_display()
-        
-        # 创建按钮区域
         self.create_buttons()
     
     def create_title_bar(self):
@@ -217,21 +223,48 @@ class CalculatorUI:
     
     def update_background(self, background_image):
         """更新背景图片"""
+        print("更新背景图片")
         # 清除现有背景
         self.background_canvas.delete('all')
         
         if background_image:
+            print("有背景图片")
             # 获取画布大小
             width = self.container.winfo_width()
             height = self.container.winfo_height()
+            print(f"画布大小: {width}x{height}")
             
-            # 创建背景图片
-            self.background_canvas.create_image(
-                width // 2,  # 居中显示
-                height // 2,
-                image=background_image,
-                anchor='center'
-            )
-            
-            # 确保内容框架在背景画布之上
-            self.content_frame.lift()
+            try:
+                # 创建背景图片
+                image_id = self.background_canvas.create_image(
+                    width // 2,  # 居中显示
+                    height // 2,
+                    image=background_image,
+                    anchor='center'
+                )
+                print(f"创建背景图片成功，ID: {image_id}")
+                
+                # 确保内容框架在背景画布之上
+                self.content_frame.lift()
+                print("内容框架已提升到顶层")
+                
+                # 使所有框架透明
+                self.style.configure('Calculator.TFrame', background='')
+                self.style.configure('Calculator.TLabel', background='')
+                self.style.configure('Memory.TButton', background='')
+                self.style.configure('Title.TButton', background='')
+                self.style.configure('Title.TLabel', background='')
+                self.style.configure('MemoryIndicator.TLabel', background='')
+            except Exception as e:
+                print(f"创建背景图片时出错: {e}")
+                import traceback
+                traceback.print_exc()
+        else:
+            print("无背景图片，恢复白色背景")
+            # 恢复白色背景
+            self.style.configure('Calculator.TFrame', background='white')
+            self.style.configure('Calculator.TLabel', background='white')
+            self.style.configure('Memory.TButton', background='white')
+            self.style.configure('Title.TButton', background='white')
+            self.style.configure('Title.TLabel', background='white')
+            self.style.configure('MemoryIndicator.TLabel', background='white')

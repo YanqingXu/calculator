@@ -65,8 +65,12 @@ class BackgroundManager:
         """
         try:
             if self.current_background and os.path.exists(self.current_background):
+                print(f"加载背景图片: {self.current_background}")
+                print(f"目标大小: {width}x{height}")
+                
                 # 加载原始图片
                 image = Image.open(self.current_background)
+                print(f"原始图片大小: {image.size}")
                 
                 # 计算缩放比例，保持宽高比
                 img_width, img_height = image.size
@@ -82,6 +86,8 @@ class BackgroundManager:
                     new_width = int(img_width * height_ratio)
                     new_height = height
                 
+                print(f"缩放后大小: {new_width}x{new_height}")
+                
                 # 缩放图片
                 image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
                 
@@ -91,7 +97,9 @@ class BackgroundManager:
                 right = left + width
                 bottom = top + height
                 
+                print(f"裁剪区域: ({left}, {top}, {right}, {bottom})")
                 image = image.crop((left, top, right, bottom))
+                print(f"最终大小: {image.size}")
                 
                 # 转换为PhotoImage并保持引用
                 self.background_image = ImageTk.PhotoImage(image)
@@ -99,4 +107,6 @@ class BackgroundManager:
                 
         except Exception as e:
             print(f"加载背景图片错误: {e}")
+            import traceback
+            traceback.print_exc()
         return None

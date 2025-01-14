@@ -14,8 +14,8 @@ class Calculator:
         # 创建主窗口
         self.window = tk.Tk()
         self.window.title(WINDOW_TITLE)
-        self.window.resizable(False, False)
         self.window.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
+        self.window.resizable(False, False)
         
         # 初始化各个模块
         self.logic = CalculatorLogic()
@@ -38,11 +38,9 @@ class Calculator:
         # 绑定窗口大小变化事件
         self.window.bind('<Configure>', self.on_window_resize)
         
-        # 加载背景
-        self.update_background()
-        
-        # 应用初始设置
-        self.apply_settings(self.settings_manager.settings)
+        # 等待窗口完全显示后再加载背景
+        self.window.update_idletasks()
+        self.window.after(100, self.update_background)  # 延迟100ms加载背景
     
     def handle_button(self, button_text):
         """处理按钮点击"""
@@ -214,22 +212,34 @@ class Calculator:
         """更新背景图片"""
         try:
             if self.background_manager.current_background:
+                print("正在更新背景...")
                 # 获取实际窗口大小
                 width = self.window.winfo_width()
                 height = self.window.winfo_height()
+                print(f"当前窗口大小: {width}x{height}")
+                
                 if width > 0 and height > 0:  # 确保窗口大小有效
                     background = self.background_manager.get_background(width, height)
                     if background:  # 确保成功获取到背景图片
+                        print("成功获取背景图片")
                         self.ui.update_background(background)
+                    else:
+                        print("获取背景图片失败")
+                else:
+                    print("窗口大小无效")
             else:
+                print("无背景图片")
                 self.ui.update_background(None)
         except Exception as e:
             print(f"更新背景时出错: {e}")
+            import traceback
+            traceback.print_exc()
             self.ui.update_background(None)  # 出错时清除背景
     
     def on_window_resize(self, event):
         """处理窗口大小变化"""
         if event.widget == self.window and event.width > 0 and event.height > 0:
+            print(f"窗口大小变化: {event.width}x{event.height}")
             # 延迟更新背景，等待窗口大小稳定
             self.window.after(100, self.update_background)
     
