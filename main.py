@@ -13,7 +13,10 @@ class Calculator:
         
         # 恢复背景
         if self.ui.background_manager.current_background:
-            bg_image = self.ui.background_manager.get_background()
+            # 获取窗口大小
+            width = self.ui.width()
+            height = self.ui.height()
+            bg_image = self.ui.background_manager.get_background(width, height)
             if bg_image:
                 self.ui.update_background(bg_image)
     
