@@ -5,13 +5,18 @@ from PySide2.QtCore import Qt
 from PIL import Image
 import json
 import os
+import logging
+
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class BackgroundManager:
     """背景管理器类"""
     def __init__(self):
         self.callback = None
         self.current_background = None
-        self.settings_file = "settings.json"
+        self.settings_file = "background_config.json"
         self.opacity = 0.8  # 默认透明度
         self.dialog = None
         self.load_settings()
@@ -26,26 +31,30 @@ class BackgroundManager:
         """加载设置"""
         try:
             if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r') as f:
+                with open(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     bg_path = settings.get('background')
                     self.opacity = settings.get('opacity', 0.8)
                     if bg_path and os.path.exists(bg_path):
-                        self.current_background = Image.open(bg_path)
-        except:
-            pass
+                        try:
+                            self.current_background = Image.open(bg_path)
+                        except Exception as e:
+                            logger.error(f"无法加载背景图片 {bg_path}: {str(e)}")
+                            self.current_background = None
+        except Exception as e:
+            logger.error(f"加载设置文件时出错: {str(e)}")
     
     def save_settings(self):
         """保存设置"""
         try:
             settings = {
-                'background': self.current_background.filename if self.current_background else None,
+                'background': str(self.current_background.filename) if self.current_background else None,
                 'opacity': self.opacity
             }
-            with open(self.settings_file, 'w') as f:
-                json.dump(settings, f)
-        except:
-            pass
+            with open(self.settings_file, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"保存设置文件时出错: {str(e)}")
     
     def show_settings(self, parent=None):
         """显示设置对话框"""
@@ -149,8 +158,8 @@ class BackgroundManager:
                 self.current_background = Image.open(file_name)
                 self.apply_background()
                 self.save_settings()
-            except:
-                pass
+            except Exception as e:
+                logger.error(f"无法加载背景图片 {file_name}: {str(e)}")
     
     def clear_background(self):
         """清除背景"""
