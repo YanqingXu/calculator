@@ -1,5 +1,7 @@
 # Calculator with Custom Background
 
+中文 | [English](README_EN.md)
+
 一个基于Python和PySide2开发的现代化计算器应用，支持自定义背景图片功能。
 
 ## 功能特点
