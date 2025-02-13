@@ -1,6 +1,7 @@
 """计算器UI模块"""
 from PySide2.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, 
-                           QPushButton, QLabel, QFrame, QGridLayout)
+                           QPushButton, QLabel, QFrame, QGridLayout,
+                           QMenu, QApplication)
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QFont, QImage, QPixmap
 from .base_widget import BackgroundWidget
@@ -88,12 +89,16 @@ class CalculatorUI(QMainWindow):
         self.expression_label.setFont(QFont("Arial", 14))
         self.expression_label.setStyleSheet("color: #666;")
         self.expression_label.setMinimumHeight(30)
+        self.expression_label.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.expression_label.customContextMenuRequested.connect(self.show_context_menu)
         
         # 结果显示
-        self.result_label = QLabel("0")
+        self.result_label = QLabel("")
         self.result_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.result_label.setFont(QFont("Arial", 24, QFont.Bold))
         self.result_label.setMinimumHeight(50)
+        self.result_label.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.result_label.customContextMenuRequested.connect(self.show_context_menu)
         
         display_layout.addWidget(self.expression_label)
         display_layout.addWidget(self.result_label)
@@ -194,6 +199,59 @@ class CalculatorUI(QMainWindow):
         else:
             self.background_widget.setBackgroundPixmap(None)
     
+    def show_context_menu(self, position):
+        """显示右键菜单"""
+        sender = self.sender()
+        menu = QMenu()
+        
+        # 添加复制操作
+        copy_action = menu.addAction("复制")
+        copy_action.triggered.connect(lambda: self.copy_text(sender))
+        copy_action.setShortcut("Ctrl+C")
+        
+        # 添加粘贴操作（仅当剪贴板中有文本时启用）
+        clipboard = QApplication.clipboard()
+        paste_action = menu.addAction("粘贴")
+        paste_action.triggered.connect(self.paste_text)
+        paste_action.setShortcut("Ctrl+V")
+        paste_action.setEnabled(bool(clipboard.text()))
+        
+        menu.exec_(sender.mapToGlobal(position))
+    
+    def copy_text(self, label):
+        """复制文本到剪贴板"""
+        text = label.text()
+        if text:
+            QApplication.clipboard().setText(text)
+    
+    def paste_text(self):
+        """从剪贴板粘贴文本"""
+        text = QApplication.clipboard().text()
+        if text:
+            # 尝试将粘贴的文本作为按钮输入处理
+            for char in text:
+                if char.isdigit() or char in ['+', '-', '×', '÷', '.', '=']:
+                    self.button_callback(char)
+    
+    def keyPressEvent(self, event):
+        """处理键盘事件"""
+        super().keyPressEvent(event)
+        
+        # 处理Ctrl+C（复制）
+        if event.key() == Qt.Key_C and event.modifiers() == Qt.ControlModifier:
+            # 优先复制结果，如果结果为空则复制表达式
+            if self.result_label.text():
+                self.copy_text(self.result_label)
+            else:
+                self.copy_text(self.expression_label)
+        
+        # 处理Ctrl+V（粘贴）
+        elif event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
+            self.paste_text()
+        
+        # 处理键盘事件
+        self.keyboard_handler.handle_key_press(event)
+    
     def resizeEvent(self, event):
         """窗口大小改变时更新背景"""
         super().resizeEvent(event)
@@ -202,7 +260,3 @@ class CalculatorUI(QMainWindow):
             bg_image = self.background_manager.get_background(size.width(), size.height())
             if bg_image:
                 self.update_background(bg_image)
-    
-    def keyPressEvent(self, event):
-        """处理键盘事件"""
-        self.keyboard_handler.handle_key_press(event)

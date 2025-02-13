@@ -10,10 +10,10 @@ class CalculatorCore:
     
     def reset(self):
         """重置计算器状态"""
-        self.current_num = "0"
+        self.current_num = ""
         self.previous_num = None
         self.operation = None
-        self.result = "0"
+        self.result = ""
         self.new_number = True
         self.decimal_pressed = False
     
