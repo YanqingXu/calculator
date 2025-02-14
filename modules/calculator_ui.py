@@ -1,8 +1,8 @@
 """计算器UI模块"""
 from PySide2.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, 
                            QPushButton, QLabel, QFrame, QGridLayout,
-                           QMenu, QApplication)
-from PySide2.QtCore import Qt
+                           QMenu, QApplication, QLineEdit)
+from PySide2.QtCore import Qt, QTimer, QObject, QEvent
 from PySide2.QtGui import QFont, QImage, QPixmap
 from .base_widget import BackgroundWidget
 from .background_manager import BackgroundManager
@@ -16,7 +16,6 @@ class CalculatorUI(QMainWindow):
         self.button_callback = button_callback
         self.memory_callback = memory_callback
         self.background_manager = BackgroundManager()
-        self.keyboard_handler = KeyboardHandler(self.button_callback)
         self.history_manager = HistoryManager()
         
         # 设置窗口属性
@@ -56,6 +55,10 @@ class CalculatorUI(QMainWindow):
                 border: 1px solid #ccc;
                 border-radius: 4px;
             }
+            QLineEdit {
+                background-color: rgba(255, 255, 255, 180);
+                padding: 5px;
+            }
         """)
         
         # 创建标题栏
@@ -84,13 +87,24 @@ class CalculatorUI(QMainWindow):
         display_layout.setSpacing(5)
         
         # 算式显示
-        self.expression_label = QLabel("")
-        self.expression_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        self.expression_label.setFont(QFont("Arial", 14))
-        self.expression_label.setStyleSheet("color: #666;")
-        self.expression_label.setMinimumHeight(30)
-        self.expression_label.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.expression_label.customContextMenuRequested.connect(self.show_context_menu)
+        self.expression_display = QLabel("")  # 显示控件
+        self.expression_display.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.expression_display.setFont(QFont("Arial", 14))
+        self.expression_display.setStyleSheet("color: #666;")
+        self.expression_display.setMinimumHeight(30)
+        self.expression_display.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.expression_display.customContextMenuRequested.connect(self.show_context_menu)
+        self.expression_display.mousePressEvent = self.switch_to_input_mode
+
+        # 算式输入
+        self.expression_input = QLineEdit()  # 输入控件
+        self.expression_input.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.expression_input.setFont(QFont("Arial", 14))
+        self.expression_input.setStyleSheet("color: #666;")
+        self.expression_input.setMinimumHeight(30)
+        self.expression_input.hide()  # 初始隐藏输入控件
+        self.expression_input.editingFinished.connect(self.finish_input)
+        self.expression_input.installEventFilter(self)  # 安装事件过滤器
         
         # 结果显示
         self.result_label = QLabel("")
@@ -100,9 +114,13 @@ class CalculatorUI(QMainWindow):
         self.result_label.setContextMenuPolicy(Qt.CustomContextMenu)
         self.result_label.customContextMenuRequested.connect(self.show_context_menu)
         
-        display_layout.addWidget(self.expression_label)
+        display_layout.addWidget(self.expression_display)
+        display_layout.addWidget(self.expression_input)
         display_layout.addWidget(self.result_label)
         main_layout.addWidget(display_frame)
+        
+        # 初始化键盘处理器（确保在创建完expression_display后初始化）
+        self.keyboard_handler = KeyboardHandler(self.button_callback, self.expression_display)
         
         # 创建内存按钮区域
         memory_layout = QHBoxLayout()
@@ -158,7 +176,10 @@ class CalculatorUI(QMainWindow):
         
         # 设置背景管理器的回调
         self.background_manager.set_callback(self.update_background)
-    
+        
+        # 安装事件过滤器
+        self.installEventFilter(self)
+
     def create_button_callback(self, text):
         """创建按钮回调函数"""
         def callback():
@@ -173,8 +194,9 @@ class CalculatorUI(QMainWindow):
     
     def update_display(self, expression, result):
         """更新显示内容"""
-        self.expression_label.setText(expression)
-        self.result_label.setText(result)
+        self.expression_display.setText(expression)
+        if result:  # 只有在有结果时才更新结果显示
+            self.result_label.setText(result)
         # 添加到历史记录
         if expression and result and ('=' in expression or expression.startswith(('pow', '√', '1/'))):
             self.history_manager.add_record(expression, result)
@@ -234,24 +256,115 @@ class CalculatorUI(QMainWindow):
                     self.button_callback(char)
     
     def keyPressEvent(self, event):
-        """处理键盘事件"""
+        """处理主窗口的按键事件"""
+        # 在显示模式下处理按键输入
+        if not self.expression_input.isVisible():
+            # 如果keyboard_handler没有处理按键，则尝试处理复制粘贴
+            if not self.keyboard_handler.handle_key_press(event):
+                if event.key() == Qt.Key_C and event.modifiers() == Qt.ControlModifier:
+                    if self.result_label.text():
+                        self.copy_text(self.result_label)
+                    else:
+                        self.copy_text(self.expression_display)
+                elif event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
+                    self.paste_from_clipboard()
+        
+        # 在输入模式下，Enter键结束输入并计算
+        elif event.key() in [Qt.Key_Return, Qt.Key_Enter]:
+            self.finish_input(calculate=True)
+        
         super().keyPressEvent(event)
+
+    def eventFilter(self, obj, event):
+        """事件过滤器，处理输入控件的焦点丢失事件和按键事件"""
+        if obj == self.expression_input:
+            if event.type() == QEvent.FocusOut:
+                self.finish_input(calculate=False)  # 失去焦点时不计算
+            elif event.type() == QEvent.KeyPress:
+                if event.key() == Qt.Key_Escape:
+                    # ESC键取消输入
+                    self.cancel_input()
+                    return True
+                elif event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+                    # Enter键结束输入并计算
+                    self.finish_input(calculate=True)
+                    return True
+        elif event.type() == QEvent.MouseButtonPress:
+            # 如果输入控件可见，且点击的不是输入控件
+            if self.expression_input.isVisible() and obj != self.expression_input:
+                # 结束输入状态
+                self.finish_input(calculate=True)
+                return True
+        return super().eventFilter(obj, event)
+
+    def finish_input(self, calculate=False):
+        """完成输入"""
+        if self.expression_input.isVisible():
+            text = self.expression_input.text()
+            if text:  # 只有在有输入内容时才更新显示
+                self.expression_input.hide()
+                self.expression_display.show()
+                if calculate:
+                    # 先发送表达式进行计算
+                    self.button_callback(text + "=")
+                    # 然后更新显示
+                    self.expression_display.setText(text)
+                else:
+                    self.expression_display.setText(text)
+
+    def switch_to_input_mode(self, event=None):
+        """切换到输入模式"""
+        if event and event.button() != Qt.LeftButton:
+            return
+        self.result_label.clear()  # 清除结果显示
         
-        # 处理Ctrl+C（复制）
-        if event.key() == Qt.Key_C and event.modifiers() == Qt.ControlModifier:
-            # 优先复制结果，如果结果为空则复制表达式
-            if self.result_label.text():
-                self.copy_text(self.result_label)
-            else:
-                self.copy_text(self.expression_label)
+        # 获取当前表达式，如果以等号结尾则移除
+        text = self.expression_display.text()
+        if text.endswith('='):
+            text = text[:-1].strip()  # 移除等号并清除末尾空格
         
-        # 处理Ctrl+V（粘贴）
-        elif event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
-            self.paste_text()
-        
-        # 处理键盘事件
-        self.keyboard_handler.handle_key_press(event)
-    
+        self.expression_input.setText(text)
+        self.expression_display.hide()
+        self.expression_input.show()
+        self.expression_input.setFocus()
+        self.expression_input.setCursorPosition(len(self.expression_input.text()))
+
+    def cancel_input(self):
+        """取消输入"""
+        if self.expression_input.isVisible():
+            self.expression_input.hide()
+            self.expression_display.show()
+
+    def switch_to_display_mode(self):
+        """切换到显示模式 - 已废弃，使用 finish_input 代替"""
+        pass
+
+    def handle_mouse_click(self, event):
+        """移除旧的鼠标点击处理方法"""
+        pass
+
+    def get_text_without_cursor(self):
+        """移除旧的光标处理方法"""
+        pass
+
+    def update_display_with_cursor(self):
+        """移除旧的光标更新方法"""
+        pass
+
+    def blink_cursor(self):
+        """移除旧的光标闪烁方法"""
+        pass
+
+    def clear_all_display(self):
+        """清除所有显示内容"""
+        self.expression_display.clear()
+        self.expression_input.clear()
+        self.result_label.clear()
+
+    def clear_result(self):
+        """清除结果显示"""
+        self.result_label.clear()
+
     def resizeEvent(self, event):
         """窗口大小改变时更新背景"""
         super().resizeEvent(event)

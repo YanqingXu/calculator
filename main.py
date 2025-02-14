@@ -35,6 +35,22 @@ class Calculator:
         expression = ""
         result = ""
         
+        # 如果是带等号的表达式，提取表达式部分并解析
+        if text.endswith('='):
+            text = text[:-1]  # 移除等号
+            parts = text.split()
+            if len(parts) >= 3:  # 有完整表达式：数字 运算符 数字
+                # 重置计算器状态
+                self.core.reset()
+                # 按顺序输入表达式
+                self.core.number_press(parts[0])
+                self.core.operation_press(parts[1])
+                self.core.number_press(parts[2])
+                # 计算结果
+                expression = f"{text} ="
+                result = self.core.calculate()
+                return self.ui.update_display(expression, result)
+
         if text.isdigit():
             self.core.number_press(text)
             # 如果有运算符，显示完整算式
@@ -51,10 +67,6 @@ class Calculator:
         elif text in ['+', '-', '×', '÷']:
             self.core.operation_press(text)
             expression = f"{self.format_expression(self.core.previous_num)} {text}"
-        elif text == '=' or text in [Qt.Key_Return, Qt.Key_Enter]:
-            if self.core.previous_num is not None and self.core.operation:
-                expression = f"{self.format_expression(self.core.previous_num)} {self.core.operation} {self.core.current_num} ="
-                result = self.core.calculate()
         elif text == '⌫':
             self.core.backspace()
             if self.core.previous_num is not None and self.core.operation:
@@ -63,10 +75,17 @@ class Calculator:
                 expression = self.core.current_num
         elif text == 'C':
             self.core.clear_all()
+            # 清除所有显示内容
+            self.ui.clear_all_display()
+            return
         elif text == 'CE':
             self.core.clear_entry()
+            # 只清除当前输入
             if self.core.previous_num is not None and self.core.operation:
-                expression = f"{self.format_expression(self.core.previous_num)} {self.core.operation}"
+                expression = f"{self.format_expression(self.core.previous_num)} {self.core.operation} {self.core.current_num}"
+            else:
+                expression = self.core.current_num
+            self.ui.clear_result()
         else:
             # 特殊运算
             current = self.core.current_num
