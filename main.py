@@ -35,6 +35,17 @@ class Calculator:
         expression = ""
         result = ""
         
+        if text == '=':
+            # 直接计算当前表达式
+            if self.core.previous_num is not None and self.core.operation and self.core.current_num:
+                expression = f"{self.format_expression(self.core.previous_num)} {self.core.operation} {self.core.current_num} ="
+                result = self.core.calculate()
+                return self.ui.update_display(expression, result)
+            elif self.core.current_num:
+                expression = f"{self.format_expression(self.core.current_num)} ="
+                result = self.core.current_num
+                return self.ui.update_display(expression, result)
+        
         # 如果是带等号的表达式，提取表达式部分并解析
         if text.endswith('='):
             text = text[:-1]  # 移除等号
@@ -98,7 +109,7 @@ class Calculator:
                 expression = self.core.current_num
         elif text == 'C':
             self.core.clear_all()
-            # 清除所有显示内容
+            expression = ""
             self.ui.clear_all_display()
             return
         elif text == 'CE':
