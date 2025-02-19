@@ -7,6 +7,7 @@ class HistoryManager:
     def __init__(self):
         self.history = []
         self.dialog = None
+        self.on_expression_select = None  # 添加回调函数
     
     def add_record(self, expression, result):
         """添加一条历史记录"""
@@ -16,6 +17,21 @@ class HistoryManager:
             # 最多保存100条记录
             if len(self.history) > 100:
                 self.history.pop(0)
+    
+    def set_expression_select_callback(self, callback):
+        """设置表达式选择回调函数"""
+        self.on_expression_select = callback
+    
+    def handle_item_double_clicked(self, item):
+        """处理列表项双击事件"""
+        if self.on_expression_select and item:
+            # 从历史记录中提取表达式部分（去掉结果）
+            text = item.text()
+            if '=' in text:
+                expression = text.split('=')[0].strip()
+                if self.on_expression_select:
+                    self.on_expression_select(expression)
+                    self.dialog.close()
     
     def show_history(self, parent=None):
         """显示历史记录对话框"""
@@ -60,6 +76,7 @@ class HistoryManager:
             
             # 创建列表控件
             self.list_widget = QListWidget()
+            self.list_widget.itemDoubleClicked.connect(self.handle_item_double_clicked)  # 添加双击事件处理
             layout.addWidget(self.list_widget)
             
             # 添加清除按钮

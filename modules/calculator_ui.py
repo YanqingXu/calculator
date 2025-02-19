@@ -17,6 +17,7 @@ class CalculatorUI(QMainWindow):
         self.memory_callback = memory_callback
         self.background_manager = BackgroundManager()
         self.history_manager = HistoryManager()
+        self.history_manager.set_expression_select_callback(self.handle_history_expression)
         
         # 设置窗口属性
         self.setWindowTitle("计算器")
@@ -377,3 +378,14 @@ class CalculatorUI(QMainWindow):
             bg_image = self.background_manager.get_background(size.width(), size.height())
             if bg_image:
                 self.update_background(bg_image)
+
+    def handle_history_expression(self, expression):
+        """处理从历史记录中选择的表达式"""
+        # 切换到输入模式并设置表达式
+        self.expression_display.hide()
+        self.expression_input.show()
+        self.expression_input.setText(expression)
+        self.expression_input.setFocus()
+        self.expression_input.setCursorPosition(len(expression))
+        # 清除结果显示
+        self.result_label.clear()
