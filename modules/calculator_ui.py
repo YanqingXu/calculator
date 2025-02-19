@@ -316,11 +316,15 @@ class CalculatorUI(QMainWindow):
         """切换到输入模式"""
         if event and event.button() != Qt.LeftButton:
             return
-        self.result_label.clear()  # 清除结果显示
         
-        # 获取当前表达式，如果以等号结尾则移除
+        # 获取当前表达式和结果
         text = self.expression_display.text()
-        if text.endswith('='):
+        result = self.result_label.text()
+        
+        # 如果有结果且表达式以等号结尾，使用结果作为新表达式的开始
+        if result and text.endswith('='):
+            text = result
+        elif text.endswith('='):
             text = text[:-1].strip()  # 移除等号并清除末尾空格
         
         self.expression_input.setText(text)

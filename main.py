@@ -38,14 +38,37 @@ class Calculator:
         # 如果是带等号的表达式，提取表达式部分并解析
         if text.endswith('='):
             text = text[:-1]  # 移除等号
-            parts = text.split()
-            if len(parts) >= 3:  # 有完整表达式：数字 运算符 数字
-                # 重置计算器状态
+            # 解析表达式
+            current_num = ""
+            operation = None
+            first_num = None
+            
+            # 解析每个字符
+            for char in text:
+                if char.isdigit() or char == '.':
+                    current_num += char
+                elif char in ['+', '-', '×', '÷']:
+                    if current_num:
+                        if first_num is None:
+                            first_num = current_num
+                            current_num = ""
+                        else:
+                            # 执行前一个运算
+                            self.core.reset()
+                            self.core.number_press(first_num)
+                            self.core.operation_press(operation)
+                            self.core.number_press(current_num)
+                            first_num = self.core.calculate()  # 使用计算结果作为下一个运算的第一个数
+                            current_num = ""
+                    operation = char
+            
+            # 处理最后的数字
+            if current_num and first_num and operation:
+                # 执行最后一个运算
                 self.core.reset()
-                # 按顺序输入表达式
-                self.core.number_press(parts[0])
-                self.core.operation_press(parts[1])
-                self.core.number_press(parts[2])
+                self.core.number_press(first_num)
+                self.core.operation_press(operation)
+                self.core.number_press(current_num)
                 # 计算结果
                 expression = f"{text} ="
                 result = self.core.calculate()
